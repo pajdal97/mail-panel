@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php
 
 /**
  * This file is part of the Nextras\MailPanel library.
@@ -8,15 +8,18 @@
 
 namespace Nextras\MailPanel;
 
+use App\Model\Mailer;
 use Nette;
 use Nette\Utils\FileSystem;
+use Nette\Utils\Finder;
 use Nette\Mail\Message;
+use Nette\Utils\Strings;
 
 
 /**
  * File mailer - emails are stored into files
  */
-class FileMailer implements IPersistentMailer
+class FileMailer extends Mailer
 {
 	use Nette\SmartObject;
 
@@ -27,7 +30,10 @@ class FileMailer implements IPersistentMailer
 	private $files;
 
 
-	public function __construct(string $tempDir)
+	/**
+	 * @param string $tempDir
+	 */
+	public function __construct($tempDir)
 	{
 		$this->tempDir = $tempDir;
 	}
@@ -35,8 +41,11 @@ class FileMailer implements IPersistentMailer
 
 	/**
 	 * Stores mail to a file.
+	 *
+	 * @param  Message $message
+	 * @return void
 	 */
-	public function send(Message $message): void
+	public function send(Message $message)
 	{
 		// get message with generated html instead of set FileTemplate etc
 		$ref = new \ReflectionMethod('Nette\Mail\Message', 'build');
@@ -56,7 +65,7 @@ class FileMailer implements IPersistentMailer
 	/**
 	 * @inheritdoc
 	 */
-	public function getMessageCount(): int
+	public function getMessageCount()
 	{
 		return count($this->findFiles());
 	}
@@ -65,7 +74,7 @@ class FileMailer implements IPersistentMailer
 	/**
 	 * @inheritDoc
 	 */
-	public function getMessage(string $messageId): Message
+	public function getMessage($messageId)
 	{
 		$files = $this->findFiles();
 		if (!isset($files[$messageId])) {
@@ -79,10 +88,10 @@ class FileMailer implements IPersistentMailer
 	/**
 	 * @inheritdoc
 	 */
-	public function getMessages(int $limit): array
+	public function getMessages($limit)
 	{
 		$files = array_slice($this->findFiles(), 0, $limit, TRUE);
-		$mails = array_map([$this, 'readMail'], $files);
+		$mails = array_map(array($this, 'readMail'), $files);
 
 		return $mails;
 	}
@@ -91,7 +100,7 @@ class FileMailer implements IPersistentMailer
 	/**
 	 * @inheritdoc
 	 */
-	public function deleteOne(string $messageId): void
+	public function deleteOne($messageId)
 	{
 		$files = $this->findFiles();
 		if (!isset($files[$messageId])) {
@@ -99,29 +108,27 @@ class FileMailer implements IPersistentMailer
 		}
 
 		FileSystem::delete($files[$messageId]);
-		$this->files = NULL;
 	}
 
 
 	/**
 	 * @inheritdoc
 	 */
-	public function deleteAll(): void
+	public function deleteAll()
 	{
 		foreach ($this->findFiles() as $file) {
 			FileSystem::delete($file);
 		}
-		$this->files = NULL;
 	}
 
 
 	/**
 	 * @return string[]
 	 */
-	private function findFiles(): array
+	private function findFiles()
 	{
 		if ($this->files === NULL) {
-			$this->files = [];
+			$this->files = array();
 			foreach (glob("{$this->tempDir}/*.mail") as $file) {
 				$messageId = substr($file, -11, 6);
 				$this->files[$messageId] = $file;
@@ -133,7 +140,11 @@ class FileMailer implements IPersistentMailer
 	}
 
 
-	private function readMail(string $path): Message
+	/**
+	 * @param  string $path
+	 * @return Nette\Mail\Message
+	 */
+	private function readMail($path)
 	{
 		$content = file_get_contents($path);
 		if ($content === FALSE) {

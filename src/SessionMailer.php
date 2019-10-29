@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php
 
 /**
  * This file is part of the Nextras\MailPanel library.
@@ -29,7 +29,12 @@ class SessionMailer implements IPersistentMailer
 	private $sessionSection;
 
 
-	public function __construct(Session $session, int $limit = 100, string $sectionName = __CLASS__)
+	/**
+	 * @param Session $session
+	 * @param int     $limit
+	 * @param string  $sectionName
+	 */
+	public function __construct(Session $session, $limit = 100, $sectionName = __CLASS__)
 	{
 		$this->limit = $limit;
 		$this->session = $session;
@@ -39,8 +44,11 @@ class SessionMailer implements IPersistentMailer
 
 	/**
 	 * Store mails to sessions.
+	 *
+	 * @param  Message $message
+	 * @return void
 	 */
-	public function send(Message $message): void
+	public function send(Message $message)
 	{
 		// get message with generated html instead of set FileTemplate etc
 		$ref = new \ReflectionMethod('Nette\Mail\Message', 'build');
@@ -52,7 +60,7 @@ class SessionMailer implements IPersistentMailer
 		$this->requireSessions();
 		$hash = substr(md5($builtMessage->getHeader('Message-ID')), 0, 6);
 		$this->sessionSection->messages = array_slice(
-			[$hash => $builtMessage] + $this->sessionSection->messages,
+			array($hash => $builtMessage) + $this->sessionSection->messages,
 			0, $this->limit, TRUE
 		);
 	}
@@ -61,7 +69,7 @@ class SessionMailer implements IPersistentMailer
 	/**
 	 * @inheritdoc
 	 */
-	public function getMessageCount(): int
+	public function getMessageCount()
 	{
 		return count($this->getMessages());
 	}
@@ -70,7 +78,7 @@ class SessionMailer implements IPersistentMailer
 	/**
 	 * @inheritDoc
 	 */
-	public function getMessage(string $messageId): Message
+	public function getMessage($messageId)
 	{
 		$this->requireSessions();
 
@@ -85,14 +93,14 @@ class SessionMailer implements IPersistentMailer
 	/**
 	 * @inheritdoc
 	 */
-	public function getMessages(int $limit = NULL): array
+	public function getMessages($limit = NULL)
 	{
 		if ($this->session->isStarted() && isset($this->sessionSection->messages)) {
 			$messages = $this->sessionSection->messages;
 			return array_slice($messages, 0, $limit, TRUE);
 
 		} else {
-			return [];
+			return array();
 		}
 	}
 
@@ -100,7 +108,7 @@ class SessionMailer implements IPersistentMailer
 	/**
 	 * @inheritdoc
 	 */
-	public function deleteOne(string $messageId): void
+	public function deleteOne($messageId)
 	{
 		$this->requireSessions();
 		if (!isset($this->sessionSection->messages[$messageId])) {
@@ -114,29 +122,33 @@ class SessionMailer implements IPersistentMailer
 	/**
 	 * @inheritdoc
 	 */
-	public function deleteAll(): void
+	public function deleteAll()
 	{
-		$this->sessionSection->messages = [];
+		$this->sessionSection->messages = array();
 	}
 
 
 	/**
 	 * Return limit of stored mails
+	 * @return int
 	 */
-	public function getLimit(): int
+	public function getLimit()
 	{
 		return $this->limit;
 	}
 
 
-	private function requireSessions(): void
+	/**
+	 * @return void
+	 */
+	private function requireSessions()
 	{
 		if (!$this->session->isStarted()) {
 			throw new \RuntimeException('Session is not started, start session or use FileMailer instead.');
 		}
 
 		if (!isset($this->sessionSection->messages)) {
-			$this->sessionSection->messages = [];
+			$this->sessionSection->messages = array();
 		}
 	}
 }

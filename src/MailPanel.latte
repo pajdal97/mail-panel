@@ -1,4 +1,7 @@
 <style>
+	#tracy-debug-panel-Nextras-MailPanel-MailPanel {
+		width: 600px;
+	}
 	#tracy-debug .tracy-panel.tracy-mode-peek .nextras-mail-panel,
 	#tracy-debug .tracy-panel.tracy-mode-float .nextras-mail-panel {
 		overflow-y: scroll; /* reserve space for scrollbar */
@@ -7,7 +10,7 @@
 	#tracy-debug .tracy-panel.tracy-mode-peek .nextras-mail-panel table,
 	#tracy-debug .tracy-panel.tracy-mode-float .nextras-mail-panel table {
 		margin-right: 10px;
-		width: 600px;
+		width: calc(100% - 5px);
 	}
 
 	#tracy-debug .tracy-panel.tracy-mode-window .nextras-mail-panel table {
@@ -90,6 +93,11 @@
 						</td>
 					</tr>
 				{/foreach}
+
+				<tr>
+					<th>Date</th>
+					<td>{$message->getHeader('Date')}</td>
+				</tr>
 
 				{var $attachments = $message->getAttachments()}
 				<tr n:if="$attachments">
